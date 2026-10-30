@@ -1,0 +1,13 @@
+node_modules/
+.env
+.env.*
+!.env.example
+dist/
+build/
+services/detector/venv/
+services/detector/__pycache__/
+services/detector/**/__pycache__/
+services/detector/.pytest_cache/
+docs/figures/*.png
+*.log
+.DS_Store
