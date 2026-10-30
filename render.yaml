@@ -1,0 +1,41 @@
+# Render Blueprint — deploys both backend services from this one repo on Render's free tier.
+# See docs/building/07-deployment.md for the full step-by-step (MongoDB Atlas setup, Vercel
+# setup, and exactly which values to paste into the env vars marked `sync: false` below —
+# those are secrets/URLs Render won't generate on its own and must be filled in by hand in
+# each service's dashboard after the blueprint creates them).
+services:
+  - type: web
+    name: ecg-context-guard-api
+    runtime: node
+    plan: free
+    rootDir: apps/api
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false # MongoDB Atlas connection string
+      - key: JWT_SECRET
+        generateValue: true
+      - key: TRANSPORT_SECRET
+        sync: false # must be set to the exact same value as the detector service below
+      - key: DETECTOR_BASE_URL
+        sync: false # the detector service's https://...onrender.com URL, once it exists
+      - key: CLIENT_ORIGIN
+        sync: false # the Vercel frontend's https://...vercel.app URL
+
+  - type: web
+    name: ecg-context-guard-detector
+    runtime: python
+    plan: free
+    rootDir: services/detector
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.12
+      - key: EXPRESS_BASE_URL
+        sync: false # the api service's https://...onrender.com URL, once it exists
+      - key: TRANSPORT_SECRET
+        sync: false # must be set to the exact same value as the api service above

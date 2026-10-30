@@ -12,6 +12,11 @@ import { errorHandler } from "./middleware/errorHandler.js";
 export function createApp() {
   const app = express();
 
+  // Render (and most PaaS hosts) terminate TLS at a proxy in front of the app — without this,
+  // Express sees every request as plain HTTP, so `secure: true` cookies would silently never
+  // get set. Harmless locally, where there's no proxy in front at all.
+  app.set("trust proxy", 1);
+
   app.use(cors({ origin: env.clientOrigin, credentials: true }));
   app.use(express.json({ limit: "2mb" })); // waveform arrays are small (720 floats) but give headroom
   app.use(cookieParser());

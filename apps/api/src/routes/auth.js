@@ -7,10 +7,15 @@ import { requireAuth } from "../middleware/auth.js";
 
 export const authRouter = Router();
 
+// In production the frontend (Vercel) and API (Render) are on different domains, so the
+// cookie must be sameSite=none + secure to survive a cross-site request at all; in local dev
+// both run on http://localhost, where sameSite=none without secure is rejected by browsers,
+// so dev stays on the lax/non-secure pair.
+const isProd = process.env.NODE_ENV === "production";
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  sameSite: "lax",
-  secure: false, // dev over http; set true behind HTTPS in a real deployment
+  sameSite: isProd ? "none" : "lax",
+  secure: isProd,
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
