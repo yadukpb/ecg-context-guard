@@ -26,12 +26,12 @@ Node/React app, same isolation convention as `services/detector`.
 | | Status |
 |---|---|
 | **Paper 1** | Complete at full scale: all 4 datasets, the full 7-value epsilon sweep, real ART attacks, full leave-one-dataset-out. Current numbers are in `Paper_1_Attack_Independent_Defence/evaluation/results.json`. |
-| **Paper 2** | Only the small-scale pass is complete (12 of 48 MIT-BIH records, 3-fold CV). A full-scale run (all 48 records, 5-fold CV, SFOA population 30/iterations 50 — the paper's actual config) was started once and never finished; nothing from that run was captured. |
-| **`COMPARISON_REPORT.md`** | **Stale for Paper 1** — it still describes an earlier, smaller Paper 1 run (210 samples, 2 datasets, a 4-value epsilon sweep), not the full run above. Accurate for Paper 2, since the full-scale run above never landed. |
+| **Paper 2** | Only the small-scale pass is complete (12 of 48 MIT-BIH records, 3-fold CV). A full-scale run (all 48 records, 5-fold CV, SFOA population 30/iterations 50 — the paper's actual config) was started once and never finished; nothing from that run was captured. Expected to take several hours on CPU, per the paper's own authors' reported timings at that same scope — see `COMPARISON_REPORT.md`'s "Paper 2's full-scale run" section for the reasoning and what to expect once it does run. |
+| **`COMPARISON_REPORT.md`** | Up to date for both papers as of the status above — Paper 1's section reflects the full-scale run; Paper 2's section is clearly labeled as the smaller-scale pass, with the full-scale run documented as attempted-but-not-completed rather than silently missing. |
 
-If you're picking this up: finish Paper 2's full-scale run, then rewrite
-`COMPARISON_REPORT.md` from both papers' current `results.json` files — that closes out
-everything named below as "not yet run."
+If you're picking this up: running Paper 2 at full scale and rewriting its section of
+`COMPARISON_REPORT.md` from that run's actual `results.json` is the single most valuable
+next step.
 
 ## The datasets — what they are, where they're from, who uses which
 

@@ -2,52 +2,87 @@
 
 Every number below comes directly from `Paper_1_Attack_Independent_Defence/evaluation/results.json`
 and `Paper_2_Layered_MIOT_Framework/evaluation/results.json`, produced by running
-`Common/venv/bin/python -m <paper>.main` against real PhysioNet data. Nothing
-here is asserted or estimated — where a number looks bad, that's what the run actually
-produced, reported as instructed rather than smoothed over.
+`Common/venv/bin/python -m <paper>.main` against real PhysioNet data, plus (for THECF's
+calibrated thresholds specifically, noted where it applies) a separate run of
+`Paper_2_Layered_MIOT_Framework/THECF/calibrate.py`. Nothing here is asserted or estimated —
+where a number looks bad, that's what the run actually produced, reported as instructed
+rather than smoothed over.
+
+**Status, read this first:** Paper 1 below is a complete, full-scale reproduction. Paper 2
+below is only the smaller-scale pass (12 of 48 MIT-BIH records, 3-fold CV) — the full-scale
+config (all 48 records, 5-fold CV, SFOA population 30/iterations 50, matching the paper's
+own setup) has not been run to completion. See "Paper 2's full-scale run" at the end of
+that section for exactly why, and what it would take.
 
 ---
 
 ## Paper 1 — Attack-data-independent defence
 
-**Config actually run:** ECG-ID (30 of 90 people) + NSTDB (`bw`/`em`/`ma`) synthetic noise at
-SNR {0, -6} dB, our own clean/noisy labelling rule (high-frequency-energy ratio cutoff —
-see `noise_generation/synth_noise.py`), person-independent 70/30 split, ResNet-18(1D), 8
-training epochs. 210 total samples (147 train / 63 test).
+**Config actually run:** all 4 datasets the paper names — ECG-ID (630 samples), CinC-2011
+(420), CinC-2014 (105), teleECG (60) — 1215 samples total, person/record-independent 70/30
+split (841 train / 374 test), ResNet-18(1D), our own clean/noisy labelling rule (a
+high-frequency-energy-ratio cutoff — see `noise_generation/synth_noise.py`), full 7-value
+epsilon sweep `[0.001, 0.01, 0.03, 0.1, 0.3, 0.5, 1.0]` for FGSM and PGD, real IBM ART
+HopSkipJump/Boundary black-box attacks (query budget scoped down for CPU — see
+`adversarial_attacks/attacks.py`), and the full leave-one-dataset-out protocol across all 4
+datasets.
 
 | Metric | Paper's Table 6 (published) | This run |
 |---|---|---|
-| Clean/noisy ACC | 99.20% | **95.24%** |
-| Clean/noisy F1 | 95.42% | **97.25%** |
+| Clean/noisy ACC | 99.20% | **94.92%** |
+| Clean/noisy F1 | 95.42% | **97.13%** |
 
-| Attack @ epsilon | Paper (Tables 3-5, ballpark) | This run (ACC) |
+| Attack @ epsilon | Paper (Tables 3–5, ballpark) | FGSM (this run, ACC) | PGD (this run, ACC) |
+|---|---|---|---|
+| ε=0.001 | 80–99% depending on dataset | 90.0% | 90.0% |
+| ε=0.01 | 99–100% | 86.7% | 86.7% |
+| ε=0.03 | rising with ε | 76.7% | 56.7% |
+| ε=0.1 | 100% | 70.0% | **0.0%** |
+| ε=0.3 | 100% | 83.3% | 0.0% |
+| ε=0.5 | 100% | 83.3% | 0.0% |
+| ε=1.0 | 100% | 83.3% | 0.0% |
+
+| Attack | Paper (ballpark) | This run (ACC, real IBM ART, n=5 samples) |
 |---|---|---|
-| FGSM, ε=0.001 | 80-99% depending on dataset | 93.3% |
-| FGSM, ε=0.01 | 99-100% | 86.7% |
-| FGSM, ε=0.1 | 100% | **23.3%** |
-| FGSM, ε=1.0 | 100% | **23.3%** |
-| PGD, same pattern | 87-100% rising with ε | 93.3% → 86.7% → **0%** → 23.3% |
-| Black-box (simplified boundary-walk, 5 samples) | Paper reports 100% (real HopSkipJump/Boundary) | 100% |
+| HopSkipJump | 100% | 80.0% |
+| Boundary | 100% | 80.0% |
+
+| Leave-one-dataset-out (train on 3, test on held-out 1) | ACC | F1 |
+|---|---|---|
+| ECG-ID held out | 87.9% | 93.3% |
+| CinC-2011 held out | 90.2% | 94.6% |
+| CinC-2014 held out | 98.1% | 98.9% |
+| teleECG held out | **55.0%** | **71.0%** |
 
 **Gap explanation (not a bug being hidden — verified by direct inspection):**
-- At ε ≥ 0.1 the gatekeeper's accuracy **collapses rather than rising toward 100% like the
-  paper's**. This is a real, measured effect of training on a much smaller, less diverse
-  dataset (210 samples vs. the paper's ~15,000 segments across 4 datasets): the ResNet-18
-  learns a decision boundary that large perturbations push samples across in the *wrong*
-  direction (being classified as clean rather than correctly flagged), rather than the
-  paper's much better-trained model staying robust. This is the single clearest sign that
-  **dataset scale, not methodology, is the main gap** here.
-- The black-box figure (100%) is **not comparable** to the paper's — it's 5 samples against
-  a simplified score-based boundary-walk, not IBM ART's HopSkipJump/Boundary (see
-  `adversarial_attacks/attacks.py` docstring). Treat it as "the fallback attack can find
-  *some* adversarial points," not as a measured black-box robustness number.
-- Our clean/noisy labels are our own re-derivation of the paper's unreleased annotation rule
-  (§2 of the feasibility report) — a different label rule alone would shift every number
-  above, which is exactly why exact digit-for-digit reproduction was never the goal.
-
-**Not yet run** (named, not silently dropped): CinC-2011, CinC-2014, teleECG (access
-verification still needed — see feasibility report §3); full 7-value epsilon sweep; full
-ECG-ID person count (90, not 30); true ART HopSkipJump/Boundary.
+- Clean/noisy accuracy (94.92%) still trails the paper's 99.20%, though by less than the
+  first, smaller-scale pass did — consistent with dataset scale being the main remaining
+  gap, not methodology (1215 samples here vs. the paper's ~15,000 segments across the same 4
+  datasets).
+- **FGSM and PGD diverge sharply at higher ε, and that divergence is itself a real finding,
+  not noise.** FGSM degrades gracefully and even partially recovers (70.0% → 83.3% from
+  ε=0.1 to ε=1.0); PGD collapses to exactly 0.0% accuracy at every ε ≥ 0.1 and stays there.
+  This matches PGD's own nature as an iterative, stronger attack: once a perturbation budget
+  large enough to fully cross this model's decision boundary is available, PGD's multi-step
+  search reliably finds it, while FGSM's single gradient step doesn't as consistently. The
+  paper's own much larger, better-trained model holds up near 100% at the same ε values —
+  the collapse here is this reproduction's decision boundary failing under a strong attack,
+  not an error in running the attack itself.
+- **teleECG is clearly the hardest dataset to generalize to** (55.0% ACC / 71.0% F1 when
+  held out, versus 87.9–98.1% for the other three). This tracks with teleECG being
+  qualitatively different data: home telehealth dry-electrode recordings with real
+  human-annotated artifact masks, rather than a clinical/challenge-dataset noise profile —
+  a model trained only on the other three datasets' noise characteristics has less basis to
+  generalize to teleECG's.
+- The real ART black-box figures (80.0% for both HopSkipJump and Boundary, n=5) are now
+  genuine IBM ART attacks against the trained model, not a simplified stand-in as in the
+  first pass — but still run at a narrower query budget (`max_iter`/`max_eval` scoped down
+  from ART's own defaults) to stay CPU-tractable for a handful of samples in one sitting, so
+  the absolute number isn't directly comparable to the paper's own GPU-backed, full-budget
+  run.
+- Our clean/noisy labels remain our own re-derivation of the paper's unreleased annotation
+  rule (§2 of the feasibility report) — a different label rule alone would shift every
+  number above, which is exactly why exact digit-for-digit reproduction was never the goal.
 
 ---
 
@@ -60,27 +95,40 @@ iterations 15 (paper: 30/50), 64px differential images, 12 CNN epochs, class-wei
 
 ### THECF
 
-| Metric | Paper | This run |
-|---|---|---|
-| Clean-window pass rate | 99.9% | **0.0%** |
-| Noisy-window (BW/EM/MA) detection rate | 98.9% at SNR=-6dB | 100% (all three types) |
+Two threshold sets were measured, not one — the paper's literal published numbers, and a
+re-derivation from real data using the paper's own stated method (mean ± 2·std), since the
+literal thresholds don't hold on real MIT-BIH (see Gap explanation below).
+
+| Metric | Paper | This run (literal thresholds) | This run (re-calibrated thresholds) |
+|---|---|---|---|
+| Clean-window pass rate | 99.9% | **0.0%** | **33.6%** |
+| Noisy-window detection — BW | 98.9% at SNR=-6dB | 100% | 77.6% |
+| Noisy-window detection — EM | 98.9% at SNR=-6dB | 100% | 92.9% |
+| Noisy-window detection — MA | 98.9% at SNR=-6dB | 100% | 78.8% |
 
 **This is a genuine, measured discrepancy, cross-checked two independent ways — not a code
 bug left unfixed.** Direct FFT analysis of real MIT-BIH record 100 (and three others: 101,
-103, 118) shows only **0.2-1.3%** of a clean window's spectral power actually falls in the
-paper's stated 30-45Hz "QRS band," against the paper's own claimed population statistic of
+103, 118) shows only **0.2–1.3%** of a clean window's spectral power actually falls in the
+paper's stated 30–45 Hz "QRS band," against the paper's own claimed population statistic of
 42% ± 15% for normal signals. Both a `scipy` Butterworth+filtfilt implementation and a raw
 FFT band-energy calculation agree on this, on real PhysioNet data, which rules out a filter
 coefficient bug. Two explanations are consistent with this: (a) the paper computes "QRS-band
 energy ratio" over a different reference window than "the whole 1-second window" (e.g. just
-the QRS complex's own ~80-120ms duration, where energy would be far more concentrated), which
+the QRS complex's own ~80–120 ms duration, where energy would be far more concentrated), which
 its text doesn't fully specify, or (b) a units/definition difference not recoverable from the
-paper's description alone. Layer 2 as literally specified rejects effectively all real MIT-BIH
-windows, which also makes the 100% "noisy-detected" figure in the table above **not
-meaningful on its own** — with layer 2 rejecting almost everything regardless of input, a
-near-100% "detection" rate on noisy input doesn't demonstrate noise-specific discrimination.
-This is flagged as the top item for follow-up (re-reading SFOA's and THECF's cited sources for
-the exact windowing convention) rather than quietly adjusted to pass.
+paper's description alone.
+
+Re-deriving the three thresholds the paper's own stated way — from real data, using
+mean ± 2·std, rather than hard-coding the paper's literal numbers under an unverifiable
+window assumption — produces a genuinely discriminative clean-pass-rate (33.6% vs. 0.0%),
+measured against 36,100 real clean windows. The literal thresholds reject effectively every
+real MIT-BIH window regardless of content, which also makes that configuration's 100%
+"noisy-detected" figure **not meaningful on its own** — with layer 2 rejecting almost
+everything regardless of input, a near-100% "detection" rate on noisy input doesn't
+demonstrate noise-specific discrimination. The re-calibrated thresholds' lower-but-genuine
+77.6–92.9% detection range is the more trustworthy of the two. This remains the top item for
+follow-up (re-reading SFOA's and THECF's cited sources for the exact windowing convention)
+rather than quietly adjusted to pass.
 
 ### HGAN-SVM-DT ablation (normal vs. abnormal)
 
@@ -93,7 +141,7 @@ the exact windowing convention) rather than quietly adjusted to pass.
 
 **What's real and matches the paper qualitatively:** the *ordering* reproduces — SFOA-tuned
 full model beats every ablated variant, same as the paper's Table 4 pattern, and by a similar
-relative margin (+8-9 points here vs. the paper's ~+1-3 points, proportionally larger because
+relative margin (+8–9 points here vs. the paper's ~+1–3 points, proportionally larger because
 our baseline starts much lower). **What doesn't match:** absolute accuracy (67% vs. 99.8%).
 Primary driver, honestly assessed: the 32-feature set is a **documented substitute** for the
 paper's unidentified "MB Assiouni method" (feasibility report §2/§15) — a different,
@@ -124,26 +172,62 @@ contributors, found in order while building this:
    nowhere near enough to learn from in a 3-fold split; this needs either substantially more
    records (the paper uses 47 patients / 48 records, not 12) or oversampling (SMOTE-style, as
    several related papers in the literature review use), neither of which fit this
-   reproduction's compute budget.
+   reproduction's compute budget at this scale.
 
-**Not yet run** (named, not silently dropped): full 48-record / 5-fold CV; SFOA at
-population 30 / iterations 50; a verified feature set in place of the MB-Assiouni substitute;
-a resolution of the THECF band-ratio discrepancy above; oversampling for VT/AFL.
+### Paper 2's full-scale run — attempted, not completed
+
+The config above (12 records, 3-fold, SFOA population 10/iterations 15) is deliberately
+scoped down. Scaling to the paper's actual configuration — all 48 MIT-BIH records, 5-fold
+patient-independent CV, SFOA population 30/iterations 50 — was attempted as a background run
+but **never finished and nothing from it was captured**; the numbers in this report are still
+only from the smaller-scale pass above.
+
+**Why this is expensive, concretely, not just "it takes a while":** the paper's own authors
+report 45–65 minutes for edge-model (HGAN-SVM-DT) training and 90–120 minutes for CNN
+training, on CPU hardware comparable to this one, *at their own 30/50 SFOA scope* — and that's
+before accounting for 5-fold CV instead of 3-fold, and 48 records instead of 12 (roughly 4×
+the data per fold). A realistic full-scale run is a multi-hour, likely several-hours,
+single-sitting CPU job — not something to re-attempt casually, and not something this report
+fabricates placeholder numbers for in the meantime.
+
+**What to expect, qualitatively, once it does run** (a reasoned expectation, clearly labeled
+as such — not a result):
+- THECF's re-calibrated numbers should be essentially unchanged — threshold derivation
+  depends on signal statistics, not record count, and 36,100 windows is already a large
+  calibration sample.
+- The HGAN-SVM-DT ablation's *ordering* (SFOA-tuned beats every ablated variant) should hold,
+  since it already matches the paper's own pattern at the smaller scale. Absolute accuracy
+  may improve somewhat with more data and a larger SFOA search, but is capped well below the
+  paper's 99.80% regardless of scale, because the substituted feature set (not the data
+  volume) is the primary driver of that gap.
+- The CNN classification stage is the one most likely to improve substantially with scale,
+  specifically because its current 0% recall on AFL/VT is a data-starvation problem (as few
+  as 14 windows for VT across 12 records) — 48 records and 5-fold CV should supply meaningfully
+  more examples of the rare classes, though likely still not parity with the paper's 99.56%,
+  for the same feature-set-substitution reason affecting the detection stage.
 
 ---
 
 ## Bottom line
 
-- **Methodology was faithfully implemented for both papers** — THECF's exact thresholds, a
-  real SFOA metaheuristic, a genuine (if non-standard, as the paper itself describes)
-  SVM+DT adversarial-style ensemble, a real differential signal-to-image CNN, a real 1D
-  ResNet-18, and real FGSM/PGD gradient attacks all ran against real PhysioNet data this
-  session — nothing here is a stub or a fabricated number.
-- **Neither paper's headline accuracy was reproduced at the scoped-down scale this reproduction
-  ran at**, and the dominant causes are now specifically identified per-stage above (dataset
-  scale for Paper 1; an unresolved band-ratio definition gap and a too-small/imbalanced
-  record subset for Paper 2's two sub-stages), not a vague "it didn't work."
-- **The single most valuable next step, if this continues:** resolve the THECF band-ratio
-  question first (it blocks trusting the 0%/100% THECF figures above either way), then scale
-  Paper 2 to the full 48-record/5-fold config, which is a config change in
-  `training/train.py`, not new code.
+- **Methodology was faithfully implemented for both papers** — THECF's exact thresholds (both
+  literal and re-calibrated), a real SFOA metaheuristic, a genuine (if non-standard, as the
+  paper itself describes) SVM+DT adversarial-style ensemble, a real differential
+  signal-to-image CNN, a real 1D ResNet-18, and real FGSM/PGD/IBM-ART gradient and black-box
+  attacks all ran against real PhysioNet data — nothing here is a stub or a fabricated number.
+- **Paper 1 is now a complete, full-scale reproduction** across all 4 named datasets, the
+  full epsilon sweep, real ART black-box attacks, and the full leave-one-dataset-out
+  protocol — closing out everything the first, smaller-scale pass had flagged as "not yet
+  run."
+- **Paper 2 is still only reproduced at a smaller scale than the paper's own config** — the
+  full-scale run is a genuinely multi-hour CPU job that hasn't been completed, not a result
+  being withheld.
+- **Neither paper's headline accuracy was reproduced**, and the dominant causes are
+  specifically identified per-stage above (dataset scale and attack-type divergence for
+  Paper 1; an unresolved THECF band-ratio definition gap and a substituted feature set for
+  Paper 2, independent of scale), not a vague "it didn't work."
+- **The single most valuable next step, if this continues:** run Paper 2 at full scale (a
+  config change in `training/train.py`, not new code — budget several hours), then rewrite
+  this report's Paper 2 section from that run's actual `results.json`. Resolving the THECF
+  band-ratio definition question is the next-most-valuable item after that, since it blocks
+  fully trusting either threshold set's figures above.
