@@ -17,10 +17,12 @@ window as `genuine` / `suspicious` / `manipulated`, surfaced on a dashboard.
 
 ## Why this stack
 
-- **Express + Mongoose + React/Vite/Tailwind/Recharts**, JWT-in-cookie auth, Mongo via a
-  minimal `docker-compose.yml` — a conventional, well-understood full-stack shape that keeps
-  the web layer boring so the interesting work stays in the signal-processing/detection
-  logic.
+- **Express + Mongoose + React/Vite/Tailwind/Recharts**, JWT-in-cookie auth — a
+  conventional, well-understood full-stack shape that keeps the web layer boring so the
+  interesting work stays in the signal-processing/detection logic. MongoDB is self-managed
+  by the API at startup by default (`apps/api/src/config/db.js`) — no Docker or separate
+  install needed for local use; `docker-compose.yml` remains available as an opt-in
+  alternative via `MONGO_URI`.
 - **One isolated Python service for the one step that needs real scientific-computing
   libraries** (MIT-BIH decoding via `wfdb`, filtering/peak-detection via `scipy`), kept
   separate from the Node API rather than forcing everything into one runtime.
@@ -31,7 +33,7 @@ window as `genuine` / `suspicious` / `manipulated`, surfaced on a dashboard.
 apps/web/        React dashboard
 apps/api/        Express API — auth, patients, ingest, alerts, control passthrough
 services/detector/  Python FastAPI — signal processing, baseline, attack sim, detection
-docker-compose.yml  Mongo only
+docker-compose.yml  Optional alternative MongoDB (opt-in via MONGO_URI; not required)
 docs/building/   This documentation trail, one numbered file per step
 docs/figures/    Static PNG plots for the written report / next review
 data/mitdb/      Local cache of downloaded MIT-BIH records (gitignored)

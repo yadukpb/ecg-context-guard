@@ -1,21 +1,19 @@
 /**
- * Seeds one demo clinician account and one demo patient, so the review demo can log in and
- * start a stream immediately instead of registering/creating a patient live.
+ * Ensures one demo clinician account and two demo patients exist, so the app can be logged
+ * into and streamed from immediately instead of registering/creating a patient live.
+ * Idempotent — safe to call on every server startup, not just once.
  *
- * Run with: npm run seed --workspace apps/api
+ * Also runnable directly: npm run seed --workspace apps/api
  */
 import bcrypt from "bcryptjs";
-import { connectDb } from "./config/db.js";
+import { connectDb, disconnectDb } from "./config/db.js";
 import { User } from "./models/User.js";
 import { Patient } from "./models/Patient.js";
-import mongoose from "mongoose";
 
 const DEMO_EMAIL = "demo@ecg-guard.local";
 const DEMO_PASSWORD = "demo1234";
 
-async function main() {
-  await connectDb();
-
+export async function ensureDemoData() {
   let user = await User.findOne({ email: DEMO_EMAIL });
   if (!user) {
     const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
@@ -57,11 +55,16 @@ async function main() {
   } else {
     console.log("BIDMC demo patient already exists");
   }
-
-  await mongoose.disconnect();
 }
 
-main().catch((err) => {
-  console.error("Seed failed:", err);
-  process.exit(1);
-});
+// Only run as a standalone script when invoked directly (`node src/seed.js`), not when
+// imported by server.js.
+if (import.meta.url === `file://${process.argv[1]}`) {
+  connectDb()
+    .then(ensureDemoData)
+    .then(disconnectDb)
+    .catch((err) => {
+      console.error("Seed failed:", err);
+      process.exit(1);
+    });
+}

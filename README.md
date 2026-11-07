@@ -176,8 +176,8 @@ anyone who wants a public link should finish the Vercel/Render/Atlas steps in th
 
 ## 7. How to run it
 
-This section assumes nothing is installed yet — if you already have Git, Node.js, Python,
-and Docker set up, skip straight to §7c.
+This section assumes nothing is installed yet — if you already have Git, Node.js, and
+Python set up, skip straight to §7c.
 
 ### 7a. Get the code
 
@@ -191,11 +191,13 @@ and Docker set up, skip straight to §7c.
 
 ### 7b. Install the prerequisites (first time only)
 
-If this is a fresh **Windows** laptop with none of these tools installed, follow all four
-steps below in order, restarting PowerShell after each install so it picks up the new PATH.
-(On macOS/Linux, the same four tools are needed — Git, Node.js, Python 3.10+, and Docker —
-installed via your usual method, e.g. Homebrew on macOS or your distro's package manager on
-Linux; the verification commands at the end of each step are identical.)
+No Docker needed — the database is self-managed (see §7c). Just three tools:
+
+If this is a fresh **Windows** laptop with none of these installed, follow all three steps
+below in order, restarting PowerShell after each install so it picks up the new PATH.
+(On macOS/Linux, the same three tools are needed — Git, Node.js, Python 3.10+ — installed
+via your usual method, e.g. Homebrew on macOS or your distro's package manager on Linux; the
+verification commands at the end of each step are identical.)
 
 1. **Git** (to download/update the code)
    - Go to **git-scm.com**, download "Git for Windows", and run the installer — the default
@@ -205,7 +207,7 @@ Linux; the verification commands at the end of each step are identical.)
      git --version
      ```
 
-2. **Node.js** (runs the API and the web dashboard)
+2. **Node.js** (runs the API, the web dashboard, and the setup/start scripts)
    - Go to **nodejs.org** and download the version labeled **"LTS"** / "Recommended for most
      users".
    - Run the installer with default options. On the "Tools for Native Modules" step, you can
@@ -230,96 +232,44 @@ Linux; the verification commands at the end of each step are identical.)
      Windows installs only register the `py` launcher. If that's the case for you,
      substitute `py` for `python` in every command in this README.)
 
-4. **Docker Desktop** (runs the MongoDB database — only needed for §7c, not for the research
-   reproduction in §7d)
-   - Go to **docker.com**, find **Docker Desktop**, and download the Windows version.
-   - The installer may ask to enable **WSL2** and restart your computer — accept both if
-     prompted.
-   - After installing, open Docker Desktop from the Start menu once and wait until it shows
-     "Docker Desktop is running" (the whale icon in the system tray stops animating).
-   - Check:
-     ```
-     docker --version
-     docker compose version
-     ```
-
-Once all of the above commands print a version number instead of an error, you're ready.
+Once all three commands above print a version number instead of an error, you're ready.
 
 ### 7c. Run the app (dashboard + live ECG detection demo)
 
-Needs internet access the first time each ECG record is used (it streams real data from
-PhysioNet). Run this once, from inside the project folder:
-
-**Windows (PowerShell):**
-
-```powershell
-cd ecg-context-guard
-
-# 1. Start the database
-docker compose up -d
-
-# 2. Install Node dependencies, set up env files
-npm install
-Copy-Item apps\api\.env.example apps\api\.env
-Copy-Item apps\web\.env.example apps\web\.env
-
-# 3. Python detector service — its own virtual environment
-cd services\detector
-python -m venv venv
-venv\Scripts\pip install -r requirements.txt
-Copy-Item .env.example .env
-cd ..\..
-
-# 4. Seed one demo account + one demo patient
-npm run seed --workspace apps/api
-```
-
-**macOS / Linux:**
+Two commands, no Docker, no database to install or configure — identical on Windows,
+macOS, and Linux. Run from inside the project folder:
 
 ```bash
-cd ecg-context-guard
+# One-time: installs Node dependencies, creates the Python virtual environment, installs
+# its dependencies, and copies every .env.example to .env.
+npm run setup
 
-# 1. Start the database (mapped to host port 27018 instead of the default 27017, in case
-#    another Mongo instance is already using 27017 on your machine)
-docker compose up -d
-
-# 2. Install Node dependencies, set up env files
-npm install
-cp apps/api/.env.example apps/api/.env
-cp apps/web/.env.example apps/web/.env
-
-# 3. Python detector service — its own virtual environment
-cd services/detector
-python3 -m venv venv
-./venv/bin/pip install -r requirements.txt
-cp .env.example .env
-cd ../..
-
-# 4. Seed one demo account + one demo patient
-npm run seed --workspace apps/api
+# Every time after that: starts the detector service, the API, and the web dashboard
+# together in one terminal, each prefixed in the output (detector / api / web).
+npm start
 ```
 
-Then, in three separate terminal windows (PowerShell commands shown; drop `venv\Scripts\`
-in favor of `./venv/bin/` on macOS/Linux, as above):
+The first time `npm start` runs, the API automatically downloads and starts its own
+self-contained MongoDB instance in the background (no Docker, no separate MongoDB install —
+just a real MongoDB binary, downloaded once and cached) and creates the demo account and
+demo patients. That data persists across restarts — you only see it get created once.
 
-```powershell
-# Window 1 — detector service (Python/FastAPI)
-cd services\detector
-venv\Scripts\uvicorn app.main:app --port 8000
-
-# Window 2 — API (Express)
-npm run dev:api
-
-# Window 3 — frontend (React/Vite)
-npm run dev:web
-```
+Needs internet access the first time: once for `npm start`'s one-off MongoDB download, and
+once per ECG record the first time it's streamed (real data from PhysioNet).
 
 Open **http://localhost:5173**, log in with `demo@ecg-guard.local` / `demo1234` (also shown
 on the login page), open the demo patient, and click **Start stream**. The sidebar's
 **"Research findings"** page shows the §5 results rendered as charts.
 
+Press **Ctrl+C** once in that terminal to stop all three services together.
+
 Run the Python test suite with `venv\Scripts\pytest -q` (Windows) or
 `./venv/bin/python -m pytest -q` (macOS/Linux) from inside `services/detector`.
+
+**Prefer Docker, or need a real external MongoDB?** Set `MONGO_URI` in `apps/api/.env` (see
+the comment in `apps/api/.env.example`) to point at any MongoDB instance — a local
+`docker compose up -d` (see `docker-compose.yml`), one already running on your machine, or a
+MongoDB Atlas cluster — and the API connects to that instead of managing its own.
 
 ### 7d. Run the research (reproducing both papers yourself)
 

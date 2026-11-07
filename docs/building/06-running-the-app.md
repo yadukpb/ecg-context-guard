@@ -2,33 +2,34 @@
 
 ## One-time setup
 
+No Docker, no manually-installed database — `scripts/setup.js` handles Node dependencies,
+the Python virtual environment, and `.env` files; the database is self-managed on first
+start (see `apps/api/src/config/db.js`).
+
 ```bash
 cd ecg-context-guard
-
-# Mongo (mapped to host port 27018, not the default 27017 — see "Port collision" below)
-docker compose up -d
-
-# Node workspaces (apps/api + apps/web)
-npm install
-cp apps/api/.env.example apps/api/.env
-cp apps/web/.env.example apps/web/.env
-
-# Python detector service
-cd services/detector
-python3 -m venv venv
-./venv/bin/pip install -r requirements.txt
-cp .env.example .env
-cd ../..
-
-# Seed one demo clinician + one demo patient (record 100)
-npm run seed --workspace apps/api
+npm run setup
 ```
 
-## Every time you run it (3 terminals)
+## Every time you run it (one terminal)
+
+```bash
+npm start
+```
+
+Runs the detector (Python/FastAPI), the API (Express), and the web dashboard (Vite)
+together via `concurrently`, each line prefixed `[detector]` / `[api]` / `[web]`. The API
+starts a self-contained MongoDB instance automatically the first time (downloads a real
+MongoDB binary once, caches it, stores data in `apps/api/.mongo-data`, gitignored) and
+creates the demo account + demo patients if they don't already exist — both persist across
+restarts. Ctrl+C once stops all three.
+
+Equivalent manual version, in three separate terminals, if you want the services' output
+separated instead:
 
 ```bash
 # Terminal 1
-cd services/detector && ./venv/bin/uvicorn app.main:app --port 8000
+cd services/detector && ./venv/bin/uvicorn app.main:app --port 8000   # Windows: venv\Scripts\uvicorn
 
 # Terminal 2
 npm run dev:api
@@ -74,10 +75,11 @@ cd services/detector && ./venv/bin/python -m pytest -q
 
 ## Known environment quirks
 
-- **Mongo port collision**: `docker-compose.yml` maps Mongo to host port **27018** instead
-  of the default 27017, in case another Mongo instance is already using 27017 on your
-  machine. If you know 27017 is free, you can change it back to `27017:27017` and update
-  `MONGO_URI` in both `.env` files and `apps/api/src/config/env.js`'s default.
+- **Prefer a real/external MongoDB instead of the self-managed one?** Set `MONGO_URI` in
+  `apps/api/.env` (commented out by default) to any MongoDB connection string — a local
+  `docker compose up -d` (see `docker-compose.yml`), one already running on your machine, or
+  a MongoDB Atlas cluster. If it's set, `config/db.js` connects to it directly instead of
+  starting its own embedded instance.
 - If `pip install` fails partway through downloading a large package, just re-run the same
   command — pip resumes partial downloads rather than starting over, so this usually fixes a
   transient network interruption.

@@ -1,14 +1,21 @@
 {
   "name": "ecg-context-guard",
   "private": true,
+  "type": "module",
   "workspaces": [
     "apps/api",
     "apps/web"
   ],
   "scripts": {
+    "setup": "node scripts/setup.js",
+    "start": "concurrently -n detector,api,web -c blue,green,yellow \"npm:dev:detector\" \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:detector": "node scripts/run-detector.js",
     "dev:api": "npm run dev --workspace apps/api",
     "dev:web": "npm run dev --workspace apps/web",
     "build:web": "npm run build --workspace apps/web",
     "seed": "npm run seed --workspace apps/api"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.7"
   }
 }
