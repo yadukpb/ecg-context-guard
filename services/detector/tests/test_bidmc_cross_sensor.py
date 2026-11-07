@@ -1,7 +1,7 @@
 """Real cross-sensor detection tests — BIDMC patients get a genuine PPG-derived secondary
 heart rate (see app/bidmc.py, signal_proc.extract_ppg_hr) instead of the synthetic stand-in
 MIT-BIH patients use. This file locks in two things found by hand against real PhysioNet
-data during development (see docs/mistakes-log.md):
+data:
 
 1. The PPG-derived rate actually tracks the ECG-derived rate on genuine data (proves it's a
    real signal, not noise).

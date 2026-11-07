@@ -753,7 +753,7 @@ verdict = manipulated   if combined_score ≥ 3.5
             sensor and short-window noise specific to those recordings, not a detector bug.
             Rather than loosen the detector to paper over the noisiest recordings, the five
             offered demo patients (05-09) were chosen because they held up under that stress
-            test. Full investigation in <code className="rounded bg-surface px-1 py-0.5 text-[11px]">docs/mistakes-log.md</code>.
+            test.
           </div>
         </div>
       </Section>

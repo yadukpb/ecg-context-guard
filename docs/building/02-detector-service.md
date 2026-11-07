@@ -6,8 +6,8 @@ Python/FastAPI service. Owns every bit of signal math; knows nothing about users
 
 - `app/mitdb.py` — fetches a MIT-BIH record from PhysioNet via `wfdb.rdrecord(name,
   pn_dir="mitdb")` and caches the parsed `Record` in memory (per detector-process lifetime).
-  Originally tried a `wfdb.dl_record(...)`-based on-disk cache; that function doesn't exist
-  in the installed wfdb version — see `docs/mistakes-log.md`.
+  `wfdb.rdrecord` streams the record directly without a separate download step, so there's no
+  on-disk cache directory to manage.
 - `app/signal_proc.py` — `preprocess()` (baseline-wander removal + bandpass filter),
   `detect_r_peaks()` (simplified Pan-Tompkins), `extract_features()` → `WindowFeatures`
   (heart rate, RR mean/std, QRS amplitude mean/std, beat count).
@@ -49,5 +49,5 @@ once per record per process). `pytest` exercises the same fetch against record "
 
 `/stream/start` must be declared `async def`, not plain `def`. FastAPI runs plain `def`
 endpoints in a worker thread with no running event loop; `streamer.start_stream()` calls
-`asyncio.create_task(...)`, which needs one. Got bitten by this once — see
-`docs/mistakes-log.md`.
+`asyncio.create_task(...)`, which needs one — declaring the endpoint `async def` keeps it on
+the event loop directly.

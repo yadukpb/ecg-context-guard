@@ -2,7 +2,7 @@
 
 Every number below comes directly from `Paper_1_Attack_Independent_Defence/evaluation/results.json`
 and `Paper_2_Layered_MIOT_Framework/evaluation/results.json`, produced by running
-`Common/venv/bin/python -m <paper>.main` against real PhysioNet data in this session. Nothing
+`Common/venv/bin/python -m <paper>.main` against real PhysioNet data. Nothing
 here is asserted or estimated — where a number looks bad, that's what the run actually
 produced, reported as instructed rather than smoothed over.
 
@@ -123,8 +123,8 @@ contributors, found in order while building this:
    rarer classes (AFL, VT) is 0%** — VT has only ~14 windows total across 4 of the 12 records,
    nowhere near enough to learn from in a 3-fold split; this needs either substantially more
    records (the paper uses 47 patients / 48 records, not 12) or oversampling (SMOTE-style, as
-   several related papers in the literature review use), neither of which fit this session's
-   compute budget.
+   several related papers in the literature review use), neither of which fit this
+   reproduction's compute budget.
 
 **Not yet run** (named, not silently dropped): full 48-record / 5-fold CV; SFOA at
 population 30 / iterations 50; a verified feature set in place of the MB-Assiouni substitute;
@@ -139,7 +139,7 @@ a resolution of the THECF band-ratio discrepancy above; oversampling for VT/AFL.
   SVM+DT adversarial-style ensemble, a real differential signal-to-image CNN, a real 1D
   ResNet-18, and real FGSM/PGD gradient attacks all ran against real PhysioNet data this
   session — nothing here is a stub or a fabricated number.
-- **Neither paper's headline accuracy was reproduced at the scoped-down scale this session
+- **Neither paper's headline accuracy was reproduced at the scoped-down scale this reproduction
   ran at**, and the dominant causes are now specifically identified per-stage above (dataset
   scale for Paper 1; an unresolved band-ratio definition gap and a too-small/imbalanced
   record subset for Paper 2's two sub-stages), not a vague "it didn't work."

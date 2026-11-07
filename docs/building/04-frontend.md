@@ -1,8 +1,7 @@
 # 04 — Frontend (`apps/web`)
 
-React + Vite + Tailwind + Recharts, same stack shape as the user's `adhd-screener` project
-(light/dark theme via a `useTheme` hook backed by `localStorage`, JWT-cookie auth via
-`credentials: "include"` on every fetch).
+React + Vite + Tailwind + Recharts (light/dark theme via a `useTheme` hook backed by
+`localStorage`, JWT-cookie auth via `credentials: "include"` on every fetch).
 
 ## Pages
 
@@ -66,11 +65,11 @@ fifth page the first three didn't have: an in-depth project explainer.
   `manipulated`) — see `src/lib/verdict.js` for the single source of truth each of these
   reads from.
 
-A real bug surfaced during this redesign and is logged in `docs/mistakes-log.md`: new
-Tailwind color tokens silently stopped generating mid-session (stale PostCSS watcher state),
-making native form inputs render with the browser's default white background instead of the
-theme. Fixed by restarting the Vite dev server; verified by checking the served CSS directly
-rather than trusting how the page looked.
+A real bug surfaced during this redesign: new Tailwind color tokens silently stopped
+generating (a stale PostCSS watcher state), making native form inputs render with the
+browser's default white background instead of the theme. Fixed by restarting the Vite dev
+server; verified by checking the served CSS directly rather than trusting how the page
+looked.
 
 ## UI v3 — code walkthrough + demo walkthrough on the Overview page
 

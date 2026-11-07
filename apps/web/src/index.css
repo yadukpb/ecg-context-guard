@@ -10,8 +10,7 @@
  * Colors are stored as space-separated "R G B" channels (not hex) so Tailwind's
  * opacity modifiers (e.g. `bg-accent/40`) work via `rgb(var(--x) / <alpha>)` —
  * see the `withOpacity` helper in tailwind.config.js. A plain hex string here
- * would make any `/NN` opacity modifier silently resolve to an invalid color
- * (see docs/mistakes-log.md).
+ * would make any `/NN` opacity modifier silently resolve to an invalid color.
  */
 :root {
   --page: 249 249 247;

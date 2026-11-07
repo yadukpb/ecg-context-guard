@@ -5,8 +5,7 @@
 // `border-accent/40` actually apply 40% opacity. Tailwind can't add an alpha
 // channel to a flat hex/var() string; it needs `rgb(var(--x) / <alpha>)`. Using
 // a plain `"var(--x)"` string here (the earlier version of this file) made any
-// `/NN` opacity modifier on a custom color silently resolve to an invalid CSS
-// value — see docs/mistakes-log.md.
+// `/NN` opacity modifier on a custom color silently resolve to an invalid CSS value.
 function withOpacity(variable) {
   return ({ opacityValue }) =>
     opacityValue !== undefined ? `rgb(var(${variable}) / ${opacityValue})` : `rgb(var(${variable}))`;

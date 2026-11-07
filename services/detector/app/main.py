@@ -52,7 +52,7 @@ class StartRequest(BaseModel):
 async def stream_start(req: StartRequest) -> dict:
     # Must be `async def`: FastAPI runs plain `def` endpoints in a worker thread with no
     # running event loop, and starting a stream needs asyncio.create_task() on the loop
-    # that will actually run it (see docs/mistakes-log.md).
+    # that will actually run it.
     if req.record_id not in _ALL_RECORD_IDS:
         raise HTTPException(400, f"record_id must be one of {sorted(_ALL_RECORD_IDS)}")
     streamer.start_stream(req.patient_id, req.record_id)

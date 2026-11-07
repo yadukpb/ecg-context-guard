@@ -2,30 +2,28 @@
 
 ## What this is
 
-A working prototype for the Review-1 project *"Context-Aware Detection of Semantic Data
-Manipulation Attacks in Remote ECG-Based Cardiac Patient Monitoring Systems"*. The slides
-(`/home/yadu/Downloads/01.Review 1 ppt.pdf`) propose detecting ECG tampering that stays
-"clinically plausible" — i.e. doesn't trip a naive out-of-range alarm — by checking a
-patient's data against their own historical baseline, its temporal behavior, and consistency
-with a second vital-sign channel, instead of a single global threshold.
+A working prototype for the project *"Context-Aware Detection of Semantic Data Manipulation
+Attacks in Remote ECG-Based Cardiac Patient Monitoring Systems"*. The project brief proposes
+detecting ECG tampering that stays "clinically plausible" — i.e. doesn't trip a naive
+out-of-range alarm — by checking a patient's data against their own historical baseline, its
+temporal behavior, and consistency with a second vital-sign channel, instead of a single
+global threshold.
 
 This repo turns that proposal into something that actually runs: real MIT-BIH ECG records
 replayed as a simulated live device stream, through preprocessing, a simulated secure
 transmission channel, patient-specific baseline modeling, an attack simulator that injects
-exactly the kind of "plausible" manipulation the slides describe, and a detector that scores
-each incoming window as `genuine` / `suspicious` / `manipulated`, surfaced on a dashboard.
+exactly that kind of "plausible" manipulation, and a detector that scores each incoming
+window as `genuine` / `suspicious` / `manipulated`, surfaced on a dashboard.
 
 ## Why this stack
 
-Matches the conventions of two of the user's existing full-stack projects
-(`adhd-screener`, `job-portal`):
-
 - **Express + Mongoose + React/Vite/Tailwind/Recharts**, JWT-in-cookie auth, Mongo via a
-  minimal `docker-compose.yml` — same shape as `adhd-screener`.
+  minimal `docker-compose.yml` — a conventional, well-understood full-stack shape that keeps
+  the web layer boring so the interesting work stays in the signal-processing/detection
+  logic.
 - **One isolated Python service for the one step that needs real scientific-computing
-  libraries** (MIT-BIH decoding via `wfdb`, filtering/peak-detection via `scipy`) — same idea
-  as `job-portal` isolating its one LLM-dependent step into its own service file, rather than
-  forcing everything into Node.
+  libraries** (MIT-BIH decoding via `wfdb`, filtering/peak-detection via `scipy`), kept
+  separate from the Node API rather than forcing everything into one runtime.
 
 ## Repo layout
 
@@ -35,7 +33,6 @@ apps/api/        Express API — auth, patients, ingest, alerts, control passthr
 services/detector/  Python FastAPI — signal processing, baseline, attack sim, detection
 docker-compose.yml  Mongo only
 docs/building/   This documentation trail, one numbered file per step
-docs/mistakes-log.md  Append-only log of things that broke and how they were fixed
 docs/figures/    Static PNG plots for the written report / next review
 data/mitdb/      Local cache of downloaded MIT-BIH records (gitignored)
 ```

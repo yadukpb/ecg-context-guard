@@ -29,9 +29,9 @@ from .signal_proc import WindowFeatures, extract_ppg_hr, preprocess, extract_fea
 # A real PPG reading that jumps more than this many bpm from this same patient's last
 # accepted reading, in a single 2s tick, is treated as a sensor artifact (e.g. a dicrotic
 # notch double-counted as a beat) rather than real physiology — real heart rate cannot swing
-# this fast. Confirmed empirically against real BIDMC recordings during development: without
-# this check, rare peak-detection errors occasionally produced a spurious "manipulated"
-# verdict on genuine, unattacked data (see docs/mistakes-log.md).
+# this fast. Confirmed empirically against real BIDMC recordings: without this check, rare
+# peak-detection errors occasionally produced a spurious "manipulated" verdict on genuine,
+# unattacked data.
 _MAX_PPG_JUMP_BPM = 20.0
 
 

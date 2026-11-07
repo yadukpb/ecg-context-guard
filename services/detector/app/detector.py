@@ -21,9 +21,9 @@ from .signal_proc import WindowFeatures
 #   real second sensor) is generated with tight, small noise, so a tight std is appropriate.
 # - A real second sensor (BIDMC-backed patients — see bidmc.py and signal_proc.extract_ppg_hr)
 #   genuinely disagrees more: two independently-estimated short-window peak rates naturally
-#   drift apart by several bpm even when both are honest. Scoring real sensor noise against
+#   drift apart by several bpm even when both are correct. Scoring real sensor noise against
 #   the synthetic path's tight std would flag genuine patients as suspicious routinely —
-#   verified against real BIDMC data during development (see docs/mistakes-log.md).
+#   verified against real BIDMC data.
 _CROSS_SENSOR_EXPECTED_STD_BPM_SYNTHETIC = 2.0
 _CROSS_SENSOR_EXPECTED_STD_BPM_REAL = 5.0
 
@@ -107,10 +107,10 @@ def _cross_sensor_score(ecg_hr_bpm: float, secondary_hr_bpm: float, expected_std
     # An earlier version also zeroed this out whenever the ECG side had fewer than 3 beats
     # in the window, to guard against the same short-window fragility fixed for PPG. That
     # backfired: the RR-interval-stretch attack itself legitimately reduces the apparent beat
-    # count (time-warping the window), so the gate silently defeated detection of that attack
-    # on low-sample-rate (BIDMC) records. See docs/mistakes-log.md. Record selection, not a
-    # detector-logic gate, is how the remaining rare false positive on noisy real data is
-    # handled — see config.DEFAULT_BIDMC_RECORDS.
+    # count (time-warping the window), so the gate would silently defeat detection of that
+    # attack on low-sample-rate (BIDMC) records. Record selection, not a detector-logic gate,
+    # is how the remaining rare false positive on noisy real data is handled — see
+    # config.DEFAULT_BIDMC_RECORDS.
     if ecg_hr_bpm <= 0 or secondary_hr_bpm <= 0:
         return 0.0
     return _zscore(ecg_hr_bpm, secondary_hr_bpm, expected_std_bpm)

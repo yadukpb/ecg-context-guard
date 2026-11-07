@@ -1,19 +1,18 @@
 # Research Feasibility and Technical Implementation Report
 
 **Dissertation:** *Context-Aware Detection of Semantic Data Manipulation Attacks in Remote
-ECG-Based Cardiac Patient Monitoring Systems* — Aneesh S (KH.EN.P2MCA25215), Gifty Mary
-(KH.EN.P2MCA25226), Guide: Aparna V, Dept. of Computer Science, Amrita Vishwa Vidyapeetham,
-2026-2027.
+ECG-Based Cardiac Patient Monitoring Systems.*
 
 **Status:** This is Stage 1 output only (document analysis + feasibility), produced per the
-brief's own instruction: *"Start with document analysis and the feasibility report only...
-wait until the research methodology and implementation plan are established before
-generating code."* No training code has been written yet. This document is the gate before
-Stage 2.
+project requirements' own instruction: *"Start with document analysis and the feasibility
+report only... wait until the research methodology and implementation plan are established
+before generating code."* No training code has been written yet. This document is the gate
+before Stage 2.
 
-**Sources read in full:** both uploaded PDFs, cover-to-cover (11 and 24 pages respectively),
-and the 23-slide `01.Review 1 ppt.pdf`. Dataset claims below were additionally checked against
-live PhysioNet / Harvard Dataverse pages, not just the papers' own citations.
+**Sources read in full:** both reference papers, cover-to-cover (11 and 24 pages
+respectively), and the project's own review slide deck. Dataset claims below were
+additionally checked against live PhysioNet / Harvard Dataverse pages, not just the papers'
+own citations.
 
 ---
 
@@ -21,12 +20,12 @@ live PhysioNet / Harvard Dataverse pages, not just the papers' own citations.
 
 Two things are true at once, and the rest of this report follows from holding both:
 
-1. **The Semester-1 platform this dissertation needed already exists and runs.** The repo at
-   `/home/yadu/ecg-context-guard` — built in an earlier session — *is* the "secure monitoring
-   and attack-simulation platform" the PPT's own conclusion slide assigns to Semester 1: real
-   MIT-BIH/BIDMC ECG replay, patient-specific baseline, temporal + cross-sensor scoring,
-   attack simulation, and a dashboard. It is not what this new brief is asking for.
-2. **The two prompts you were sent describe a separate, much larger piece of work**:
+1. **The Semester-1 platform this dissertation needed already exists and runs.** This repo
+   *is* the "secure monitoring and attack-simulation platform" the review slides' own
+   conclusion assigns to Semester 1: real MIT-BIH/BIDMC ECG replay, patient-specific
+   baseline, temporal + cross-sensor scoring, attack simulation, and a dashboard. It is not
+   what this new scope is asking for.
+2. **The two reference papers describe a separate, much larger piece of work**:
    independently reproducing two *existing* published papers (Paper 1's ResNet-18 adversarial
    gatekeeper, Paper 2's THECF + HGAN-SVM-DT + SFOA-CNN layered MIoT pipeline) end-to-end,
    with real training and an honest accuracy comparison against their reported numbers. This
@@ -61,7 +60,7 @@ introduce label drift that the original authors' numbers can't account for.
 **Important framing for the dissertation panel:** neither paper exposes its processed
 dataset or exact feature/label files. Reproduction here means *faithful re-implementation of
 the stated methodology*, evaluated honestly against the *same metrics*, not byte-identical
-numbers. This is explicitly what the brief itself requires ("Never manipulate test data or
+numbers. This is explicitly what the project requirements themselves require ("Never manipulate test data or
 labels to achieve the published accuracy... If exact accuracy cannot be reproduced, explain
 the technical reasons").
 
@@ -78,7 +77,7 @@ the technical reasons").
 | **CinC Challenge 2014** | `physionet.org/content/challenge-2014/1.0.0/` | WFDB, multimodal (ECG + other signals) | ~111MB archive | ECG + up to 8 signals/record ("Robust Detection of Heart Beats in Multimodal Data") | Varies | Beat annotations only (no beat-type distinction) | Open, PhysioNet terms | Usable for ECG channel extraction | Multimodal complexity beyond what's needed; again no noise-type label |
 | **teleECG** | **Not on PhysioNet.** Identified as the UNSW "TELE ECG Database" — 250 lead-I, 30 s recordings from home-dwelling COPD/CHF patients, hosted on **Harvard Dataverse**, DOI `10.7910/DVN/QTG0EP` | Per Dataverse record (not yet opened directly) | 250 short recordings | ECG only, telehealth dry-electrode | Not confirmed (check Dataverse page) | QRS + artifact masks (UNSW detector), no BW/EM/MA/PLI label | Needs direct verification on Dataverse before download scripting | Likely usable, but **this is the one real gap**: the paper cites it as if PhysioNet-hosted; it is not | Must verify Dataverse access terms before building a download script — do not assume open access until checked |
 
-**Additional physiological channels requested in the brief (HR, SpO₂, BP, respiration)**: none
+**Additional physiological channels requested in the project requirements (HR, SpO₂, BP, respiration)**: none
 of the six datasets above carry synchronized SpO₂/BP/respiration alongside ECG. The only
 PhysioNet resource in this space already in use by this project is **BIDMC** (`bidmc`,
 real concurrent ECG + PPG — already wired into `ecg-context-guard`'s cross-sensor module).
@@ -97,7 +96,7 @@ re-derivation, not a recovered original.
 
 ## 4. New Derived Dataset Generation Feasibility (for the dissertation's own semantic-manipulation detector — separate from reproducing Papers 1 & 2)
 
-The dissertation's actual contribution (per the PPT) is detecting **subtle, clinically
+The dissertation's actual contribution (per the review slides) is detecting **subtle, clinically
 plausible manipulation** that stays inside normal-looking ranges — a different problem from
 either paper's "noise vs clean" (Paper 1) or "abnormal vs normal rhythm" (Paper 2)
 framing. Neither paper's dataset contains this label, so a derived dataset is required
@@ -108,16 +107,16 @@ regardless of whether Papers 1/2 get reproduced.
   `ecg-context-guard`.
 - **Valid transformations** (already partially implemented in `services/detector/app/attack.py`
   per `docs/building/05-detection-algorithm.md`): amplitude drift, RR-interval stretch —
-  these are exactly the "physiologically plausible manipulation" category the brief asks
+  these are exactly the "physiologically plausible manipulation" category the project requirements ask
   about. Replay attacks and cross-sensor-inconsistency attacks (feed stale/mismatched PPG
   against live ECG) are natural next additions and straightforward given the existing
   architecture.
 - **Ground-truth/leakage discipline:** the existing repo already separates calibration
-  windows (baseline) from live/attacked windows per patient, and documents (in
-  `docs/mistakes-log.md`) the exact pitfalls hit when real sensor noise was introduced
-  (false positives from genuine two-sensor disagreement) — this experience directly answers
-  the brief's "how to prevent data leakage / how to validate the derived dataset" questions;
-  it does not need to be solved from scratch.
+  windows (baseline) from live/attacked windows per patient, and the detection algorithm doc
+  (`docs/building/05-detection-algorithm.md`) covers the exact pitfalls hit when real sensor
+  noise was introduced (false positives from genuine two-sensor disagreement) — this
+  experience directly answers the project requirements' "how to prevent data leakage / how
+  to validate the derived dataset" questions; it does not need to be solved from scratch.
 - **Conclusion:** yes, a derived dataset built on MIT-BIH + BIDMC with the existing
   attack-simulation module, extended with 2–3 more attack types, is the right path for the
   dissertation's own semantic-manipulation detector. This is **separate budget/time** from
@@ -126,17 +125,17 @@ regardless of whether Papers 1/2 get reproduced.
 
 ---
 
-## 5. Proposed System Analysis (from the PPT) vs. the Two Papers
+## 5. Proposed System Analysis (from the review slides) vs. the Two Papers
 
-The PPT is explicit (slide 21, Conclusion) that:
+The review slides are explicit (slide 21, Conclusion) that:
 - Semester 1 → secure monitoring + attack-simulation platform (**done**, this repo).
 - Semester 2 → the proposed **context-aware detection mechanism** (patient-specific baseline +
   temporal + cross-sensor) — not yet built as an ML/DL model; currently a documented,
   inspectable weighted-threshold scheme (`docs/building/05-detection-algorithm.md`), by
   deliberate design choice already recorded in this repo ("Why not ML/DL" section).
 
-Papers 1 and 2 are **literature-review entries** (Article 4 and Article 2 on the PPT's own
-Literature Review slides), explicitly limitation-flagged by the student's own PPT:
+Papers 1 and 2 are **literature-review entries** (Article 4 and Article 2 on the review slides' own
+Literature Review slides), explicitly limitation-flagged by the review slides themselves:
 - Paper 1: *"does not specifically model patient-specific physiological behaviour or semantic
   manipulation."*
 - Paper 2: *"mainly detects abnormal/faulty signals; evaluation relies heavily on benchmark
@@ -151,7 +150,7 @@ should not be presented as the dissertation's own contribution.
 
 ## 6. Research Gap
 
-Confirmed from the papers + PPT, not invented:
+Confirmed from the papers + review slides, not invented:
 
 - Paper 1 solves: filtering out noisy/adversarially-perturbed ECG before storage, attack-data-
   independent (gatekeeper trained without seeing adversarial examples).
@@ -159,7 +158,7 @@ Confirmed from the papers + PPT, not invented:
   classification, with a sensor-fault pre-filter (THECF).
 - Neither solves: **attacks that stay inside clinically plausible ranges** (both frameworks
   assume the corruption shows up as noise-like signal distortion or outright abnormal rhythm —
-  exactly the gap the PPT's own Research Gap slide states). Neither uses **patient-specific
+  exactly the gap the review slides' own Research Gap slide states). Neither uses **patient-specific
   historical baselines**, neither does **cross-sensor consistency checking**, and neither
   targets **temporal plausibility within a single session** (a value that's "normal" for the
   population but abruptly wrong for *this* patient right now).
@@ -194,7 +193,7 @@ since it detects noise/attack *distortion*, not *semantic plausibility*.
 
 ## 8. Experimental Design
 
-Three **non-overlapping** experiment tracks (the brief explicitly warns against mixing them):
+Three **non-overlapping** experiment tracks (the project requirements explicitly warn against mixing them):
 
 1. **Independent reproduction of Paper 1** — ResNet-18 gatekeeper, same 4 datasets (minus the
    teleECG caveat), same 4 attacks, same leave-one-dataset-out protocol, report ACC/F1/
@@ -222,7 +221,7 @@ Three **non-overlapping** experiment tracks (the brief explicitly warns against 
 - **Internet access:** confirmed working (PhysioNet reachable, HTTP 200).
 - **GPU:** none present (`nvidia-smi` fails — no NVIDIA driver). CPU-only.
 - **Python ML stack:** not yet installed (`torch` missing) — needs a fresh `venv` (same
-  pattern as `services/detector`), `requirements.txt` per the brief's list (numpy, pandas,
+  pattern as `services/detector`), `requirements.txt` per the project requirements' list (numpy, pandas,
   scipy, wfdb, scikit-learn, pytorch or tensorflow, matplotlib, seaborn, neurokit2), plus
   `adversarial-robustness-toolbox` or `foolbox` for Paper 1's four attacks.
 - **Hardware fit, per paper:**
@@ -254,7 +253,7 @@ covered:
 - Paper 2's "32 DWT/morphological features via the MB Assiouni method" — this exact named
   method could not be identified from any source checked; we will substitute a documented,
   cited, equivalent 32-feature DWT + morphology set and label it as a justified substitution,
-  per the brief's own instruction ("propose a clearly labelled, justified implementation
+  per the project requirements' own instruction ("propose a clearly labelled, justified implementation
   assumption" when a detail is missing).
 - Paper 2's "HGAN" is SVM+DT in an SFOA-tuned adversarial loop, not a neural GAN — this is
   unusual enough that it should be implemented exactly as described (not swapped for a
@@ -271,7 +270,7 @@ covered:
 
 | Stage | Input | Tasks | Output | Done when |
 |---|---|---|---|---|
-| 1. Paper analysis (this report) | 2 PDFs + PPT | Extract specs, assess feasibility | This document | You've reviewed and approved scope/sequencing below |
+| 1. Paper analysis (this report) | 2 reference papers + review slides | Extract specs, assess feasibility | This document | You've reviewed and approved scope/sequencing below |
 | 2. Dataset acquisition & validation | §3 | Script `wfdb.rdrecord` pulls for MIT-BIH/NSTDB/ECG-ID/CinC2011/CinC2014; verify teleECG's Dataverse access; re-derive noisy/clean labels for Paper 1 under its stated rule | `research/Common/datasets/` cache + a written label-derivation note | Every dataset loads and is spot-checked against the paper's stated record counts (Table 2) |
 | 3. Paper 1 implementation | Stage 2 data | ResNet-18 (1D), 4 attacks via ART/foolbox, leave-one-dataset-out training | `research/Paper_1_Attack_Independent_Defence/` | Metrics computed on held-out folds, compared to Tables 3–6 |
 | 4. Paper 1 evaluation | Stage 3 | Confusion matrices, ROC, FPR/FNR, comparison table + gap analysis | Report section | Comparison table written, gaps explained |
@@ -288,7 +287,7 @@ covered:
 
 1. **Keep the three tracks separate** in the repo and in the write-up: Paper 1 reproduction,
    Paper 2 reproduction, and the dissertation's own proposed system. Do not let Paper 2's
-   SVM/DT or Paper 1's ResNet-18 quietly become "the proposed system" — the PPT's own
+   SVM/DT or Paper 1's ResNet-18 quietly become "the proposed system" — the review slides' own
    Research Gap slide is explicit that neither paper covers the dissertation's actual target
    problem.
 2. **Start with Paper 2, not Paper 1**, if sequencing matters for time budget — it's the more
@@ -297,7 +296,7 @@ covered:
    reusable in the existing `ecg-context-guard` preprocessing regardless of whether the rest
    of Paper 2 gets reproduced.
 3. **Treat Paper 1's and Paper 2's reported accuracy as reference targets, not contractual
-   outputs** — per the brief's own instruction. Report actual numbers from actual training
+   outputs** — per the project requirements' own instruction. Report actual numbers from actual training
    runs, with an honest gap analysis grounded in the specific missing details identified in
    §2–§3 (re-annotated labels for Paper 1; a substituted feature set for Paper 2), not a
    promise to match them.
@@ -305,6 +304,6 @@ covered:
    the one dataset in this whole brief that is not where the source paper implies it is.
 5. **Do not begin Stage 3 (Paper 1 code) or Stage 5 (Paper 2 code) until you confirm**: (a) this
    scope and sequencing, (b) where this work should live (recommended:
-   `/home/yadu/ecg-context-guard/research/`, kept separate from the Node/React app, mirroring
+   ``research/`, kept separate from the Node/React app, mirroring
    the existing `services/detector` Python-isolation pattern), and (c) whether both papers are
    in scope for this semester or whether time constraints mean picking one.

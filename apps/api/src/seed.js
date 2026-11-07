@@ -40,7 +40,7 @@ async function main() {
 
   // A second demo patient backed by a BIDMC record — real concurrent ECG+PPG, so its
   // cross-sensor check is genuine rather than the synthetic stand-in the MIT-BIH-backed
-  // patient above uses. See docs/mistakes-log.md for why this patient exists.
+  // patient above uses.
   const existingBidmcPatient = await Patient.findOne({
     clinician: user._id,
     name: "Demo Patient (BIDMC 05, real cross-sensor)",

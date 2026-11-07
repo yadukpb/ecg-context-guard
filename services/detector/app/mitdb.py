@@ -1,8 +1,8 @@
 """Loading MIT-BIH Arrhythmia Database records, with an in-memory cache.
 
 ``wfdb.rdrecord(..., pn_dir="mitdb")`` streams a record directly from PhysioNet (no
-``dl_record`` exists in this wfdb version — confirmed by inspecting the installed package,
-see docs/mistakes-log.md). We cache the parsed ``Record`` in memory per record name so each
+``dl_record`` exists in this wfdb version — confirmed by inspecting the installed package).
+We cache the parsed ``Record`` in memory per record name so each
 one is only fetched over the network once per detector-service process lifetime, which is
 enough for a demo (a handful of records, read once each into memory, then replayed locally).
 """

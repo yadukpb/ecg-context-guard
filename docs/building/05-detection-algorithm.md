@@ -43,7 +43,7 @@ every number above is visible and arguably defensible in front of a panel, which
 more at this stage than squeezing out marginal accuracy with a model that would also need
 its own training-data and evaluation story.
 
-## Honest limitations (say these before a reviewer asks)
+## Known limitations
 
 - **Real cross-sensor data exists for some patients, not others — and this is disclosed per
   patient, not glossed over.** MIT-BIH only has ECG channels, so patients backed by a
@@ -70,7 +70,7 @@ its own training-data and evaluation story.
   threshold on clean, unattacked data because of genuine sensor/short-window noise in those
   specific recordings — handled by curating the five offered demo records (`bidmc:05`-`09`)
   by actually stress-testing each one against ~100 genuine windows rather than by further
-  loosening the detector's thresholds. See `docs/mistakes-log.md` for the full investigation.
+  loosening the detector's thresholds.
 - **Thresholds (2.0 / 3.5) are reasoned defaults, not fit to labeled attack data.** They were
   chosen so that normal variation in real MIT-BIH windows reads comfortably under 2.0 (see
   `docs/figures/detection_timeline.png`: all pre-attack points sit under 1.0) and an injected

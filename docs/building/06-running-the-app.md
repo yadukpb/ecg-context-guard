@@ -72,14 +72,12 @@ Writes `docs/figures/waveform_comparison.png` and `docs/figures/detection_timeli
 cd services/detector && ./venv/bin/python -m pytest -q
 ```
 
-## Known environment quirks on this machine
+## Known environment quirks
 
-- **Mongo port collision**: this machine already runs an `adhd-screener-mongo` container on
-  host port 27017. This project's `docker-compose.yml` maps to **27018** instead — if you
-  move to a machine without that collision, you can safely change it back to `27017:27017`
-  and update `MONGO_URI` in both `.env` files and `apps/api/src/config/env.js`'s default.
-- First `pip install` here hit a transient network interruption; just re-run the same
-  command if it happens to you too (pip resumes partial downloads).
-
-See `docs/mistakes-log.md` for the full list of things that broke while building this and
-exactly how they were fixed.
+- **Mongo port collision**: `docker-compose.yml` maps Mongo to host port **27018** instead
+  of the default 27017, in case another Mongo instance is already using 27017 on your
+  machine. If you know 27017 is free, you can change it back to `27017:27017` and update
+  `MONGO_URI` in both `.env` files and `apps/api/src/config/env.js`'s default.
+- If `pip install` fails partway through downloading a large package, just re-run the same
+  command — pip resumes partial downloads rather than starting over, so this usually fixes a
+  transient network interruption.

@@ -44,7 +44,7 @@ BIDMC_FS_HZ = 125
 # produced a false "manipulated"/"suspicious" verdict. Several candidates (e.g. 01-04, 10,
 # 17) had occasional real PPG/ECG measurement noise large enough to cross those thresholds
 # on clean data — a real property of those recordings, not a detector bug — so they were
-# swapped out rather than patched around. See docs/mistakes-log.md.
+# swapped out rather than patched around.
 DEFAULT_BIDMC_RECORDS = ["bidmc:05", "bidmc:06", "bidmc:07", "bidmc:08", "bidmc:09"]
 
 EXPRESS_BASE_URL = os.environ.get("EXPRESS_BASE_URL", "http://localhost:4000")

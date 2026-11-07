@@ -100,7 +100,7 @@ The web app actually has a **"Research findings" page** (`/research` in the side
 browsable from the same dashboard as the live detector demo — not just buried in markdown
 reports.
 
-## 4. What we were trying to do (the brief, restated honestly)
+## 4. Goals and scope
 
 The instruction behind the `research/` work was explicit, and is worth repeating here so
 nobody mistakes this for a sales pitch: **reproduce both papers' methodology faithfully
@@ -176,45 +176,141 @@ anyone who wants a public link should finish the Vercel/Render/Atlas steps in th
 
 ## 7. How to run it
 
-### 7a. The app (dashboard + live ECG detection demo)
+This section assumes nothing is installed yet — if you already have Git, Node.js, Python,
+and Docker set up, skip straight to §7c.
 
-**Prerequisites:** Docker, Node.js 18+, Python 3.10+, and internet access (it streams real
-ECG data from PhysioNet the first time each record is used).
+### 7a. Get the code
 
-```bash
-git clone https://github.com/yadukpb/ecg-context-guard.git
+- **With Git installed:** open a terminal in the folder where you want the project, then
+  run `git clone <this repository's URL>` followed by `cd ecg-context-guard`. You'll find
+  the exact clone URL on this repository's own page — look for the green **"Code"** button
+  and copy the HTTPS link it shows.
+- **Without Git:** on the repository's page, click the green **"Code"** button → **"Download
+  ZIP"**, then extract the ZIP file anywhere on your computer and open a terminal inside the
+  extracted folder.
+
+### 7b. Install the prerequisites (first time only)
+
+If this is a fresh **Windows** laptop with none of these tools installed, follow all four
+steps below in order, restarting PowerShell after each install so it picks up the new PATH.
+(On macOS/Linux, the same four tools are needed — Git, Node.js, Python 3.10+, and Docker —
+installed via your usual method, e.g. Homebrew on macOS or your distro's package manager on
+Linux; the verification commands at the end of each step are identical.)
+
+1. **Git** (to download/update the code)
+   - Go to **git-scm.com**, download "Git for Windows", and run the installer — the default
+     options are fine everywhere, just click "Next" through the whole wizard.
+   - Open **PowerShell** (press the Windows key, type `PowerShell`, press Enter) and check:
+     ```
+     git --version
+     ```
+
+2. **Node.js** (runs the API and the web dashboard)
+   - Go to **nodejs.org** and download the version labeled **"LTS"** / "Recommended for most
+     users".
+   - Run the installer with default options. On the "Tools for Native Modules" step, you can
+     leave that checkbox unchecked.
+   - Open a **new** PowerShell window and check:
+     ```
+     node --version
+     npm --version
+     ```
+
+3. **Python** (runs the signal-processing service and the research reproduction)
+   - Go to **python.org/downloads** and download Python 3.10 or newer.
+   - **Important:** on the installer's first screen, tick **"Add python.exe to PATH"** before
+     clicking "Install Now" — this is the single most common thing people forget, and
+     without it none of the `python` commands below will work.
+   - Open a new PowerShell window and check:
+     ```
+     python --version
+     pip --version
+     ```
+     (If Windows says it doesn't recognize `python`, try `py --version` instead — some
+     Windows installs only register the `py` launcher. If that's the case for you,
+     substitute `py` for `python` in every command in this README.)
+
+4. **Docker Desktop** (runs the MongoDB database — only needed for §7c, not for the research
+   reproduction in §7d)
+   - Go to **docker.com**, find **Docker Desktop**, and download the Windows version.
+   - The installer may ask to enable **WSL2** and restart your computer — accept both if
+     prompted.
+   - After installing, open Docker Desktop from the Start menu once and wait until it shows
+     "Docker Desktop is running" (the whale icon in the system tray stops animating).
+   - Check:
+     ```
+     docker --version
+     docker compose version
+     ```
+
+Once all of the above commands print a version number instead of an error, you're ready.
+
+### 7c. Run the app (dashboard + live ECG detection demo)
+
+Needs internet access the first time each ECG record is used (it streams real data from
+PhysioNet). Run this once, from inside the project folder:
+
+**Windows (PowerShell):**
+
+```powershell
 cd ecg-context-guard
 
-# 1. Mongo (mapped to host port 27018, not the default 27017 — another local project
-#    already uses 27017; see docs/mistakes-log.md if you ever need to change it back)
+# 1. Start the database
 docker compose up -d
 
-# 2. Node workspaces (apps/api + apps/web)
+# 2. Install Node dependencies, set up env files
+npm install
+Copy-Item apps\api\.env.example apps\api\.env
+Copy-Item apps\web\.env.example apps\web\.env
+
+# 3. Python detector service — its own virtual environment
+cd services\detector
+python -m venv venv
+venv\Scripts\pip install -r requirements.txt
+Copy-Item .env.example .env
+cd ..\..
+
+# 4. Seed one demo account + one demo patient
+npm run seed --workspace apps/api
+```
+
+**macOS / Linux:**
+
+```bash
+cd ecg-context-guard
+
+# 1. Start the database (mapped to host port 27018 instead of the default 27017, in case
+#    another Mongo instance is already using 27017 on your machine)
+docker compose up -d
+
+# 2. Install Node dependencies, set up env files
 npm install
 cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env
 
-# 3. Python detector service (its own venv, isolated from research/'s venv below)
+# 3. Python detector service — its own virtual environment
 cd services/detector
 python3 -m venv venv
 ./venv/bin/pip install -r requirements.txt
 cp .env.example .env
 cd ../..
 
-# 4. Seed one demo clinician account + one demo patient
+# 4. Seed one demo account + one demo patient
 npm run seed --workspace apps/api
 ```
 
-Then, in three separate terminals:
+Then, in three separate terminal windows (PowerShell commands shown; drop `venv\Scripts\`
+in favor of `./venv/bin/` on macOS/Linux, as above):
 
-```bash
-# Terminal 1 — detector service (Python/FastAPI)
-cd services/detector && ./venv/bin/uvicorn app.main:app --port 8000
+```powershell
+# Window 1 — detector service (Python/FastAPI)
+cd services\detector
+venv\Scripts\uvicorn app.main:app --port 8000
 
-# Terminal 2 — API (Express)
+# Window 2 — API (Express)
 npm run dev:api
 
-# Terminal 3 — frontend (React/Vite)
+# Window 3 — frontend (React/Vite)
 npm run dev:web
 ```
 
@@ -222,23 +318,39 @@ Open **http://localhost:5173**, log in with `demo@ecg-guard.local` / `demo1234` 
 on the login page), open the demo patient, and click **Start stream**. The sidebar's
 **"Research findings"** page shows the §5 results rendered as charts.
 
-Run the Python test suite with `cd services/detector && ./venv/bin/python -m pytest -q`.
+Run the Python test suite with `venv\Scripts\pytest -q` (Windows) or
+`./venv/bin/python -m pytest -q` (macOS/Linux) from inside `services/detector`.
 
-### 7b. The research (reproducing both papers yourself)
+### 7d. Run the research (reproducing both papers yourself)
 
-Separate venv, separate dependencies, lives entirely under `research/` and never touches the
-Node/React app:
+Separate virtual environment, separate dependencies, lives entirely under `research/` and
+never touches the Node/React app.
+
+**Windows (PowerShell):**
+
+```powershell
+cd research
+python -m venv Common\venv
+Common\venv\Scripts\pip install -r Common\requirements.txt
+
+# Each one prints its metrics and writes them to <paper>/evaluation/results.json
+Common\venv\Scripts\python -m Paper_1_Attack_Independent_Defence.main
+Common\venv\Scripts\python -m Paper_2_Layered_MIOT_Framework.main
+
+# Test suite for both papers' implementations
+Common\venv\Scripts\pytest
+```
+
+**macOS / Linux:**
 
 ```bash
 cd research
 python3 -m venv Common/venv
 Common/venv/bin/pip install -r Common/requirements.txt
 
-# Each one prints its metrics and writes them to <paper>/evaluation/results.json
 Common/venv/bin/python -m Paper_1_Attack_Independent_Defence.main
 Common/venv/bin/python -m Paper_2_Layered_MIOT_Framework.main
 
-# Test suite for both papers' implementations
 Common/venv/bin/pytest
 ```
 
@@ -248,8 +360,9 @@ the same report. Read `research/FEASIBILITY_REPORT.md` first for exactly what's 
 versus each paper's full-scale configuration, and why (dataset subsets, SFOA population
 size, epoch counts, etc. — all named, none silent).
 
-Note: `research/Common/venv` is intentionally gitignored (it's ~5GB with PyTorch and IBM
-ART installed) — the commands above rebuild it locally in under a few minutes.
+Note: the `Common/venv` folder is intentionally excluded from the repository (it's several
+GB once PyTorch and the adversarial-attack libraries are installed) — the commands above
+rebuild it locally in a few minutes.
 
 ## 8. Where to read more
 
@@ -257,9 +370,7 @@ ART installed) — the commands above rebuild it locally in under a few minutes.
   links to the rest of the `docs/building/` series (architecture, detector service, backend
   API, frontend, the detection algorithm in full detail, running the app, deployment).
 - [`docs/building/05-detection-algorithm.md`](docs/building/05-detection-algorithm.md) — the
-  exact genuine/suspicious/manipulated formula and its honestly-stated limitations.
-- [`docs/mistakes-log.md`](docs/mistakes-log.md) — append-only log of real bugs hit while
-  building this and how each was actually fixed (not sanitized after the fact).
+  exact genuine/suspicious/manipulated formula and its known limitations.
 - [`research/README.md`](research/README.md) — how the two-paper reproduction is organized.
 - [`research/FEASIBILITY_REPORT.md`](research/FEASIBILITY_REPORT.md) — full dataset
   investigation, feasibility call per paper, and the implementation roadmap that was

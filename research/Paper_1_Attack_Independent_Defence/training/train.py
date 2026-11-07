@@ -15,9 +15,8 @@ together:
 
 Person-independent (ECG-ID) / record-independent (the other three) group IDs are tracked
 throughout so a train/test split never puts two samples from the same underlying
-person/recording on opposite sides (the same leakage class of mistake already documented in
-ecg-context-guard's docs/mistakes-log.md), and a parallel per-sample dataset-name array
-supports leave-one-dataset-out evaluation (the paper's own stated protocol, §5.2).
+person/recording on opposite sides, and a parallel per-sample dataset-name array supports
+leave-one-dataset-out evaluation (the paper's own stated protocol, §5.2).
 """
 from __future__ import annotations
 
