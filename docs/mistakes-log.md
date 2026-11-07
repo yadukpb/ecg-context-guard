@@ -189,3 +189,31 @@ in the UI and `/records` response, rather than quietly replacing one disclosed l
 with an undisclosed new one.
 
 ---
+
+### Renaming `mitbihRecordId` → `recordId` broke existing patients, not new ones
+
+**What broke:** Starting a stream on the pre-existing "Demo Patient (record 100)" failed with
+`detector service /stream/start failed: 422 ... "loc":["body","record_id"],"msg":"Field
+required"`. Discovered while recording a demo video of the already-"finished" BIDMC fix.
+
+**Cause:** Adding BIDMC support required renaming the Patient model's `mitbihRecordId` field
+to `recordId` (it could now hold either a MIT-BIH or a BIDMC record id). The rename was
+applied to the Mongoose schema and every route/route handler, and verified against a freshly
+`npm run seed`-created BIDMC patient — which worked, because `seed.js` was also updated and
+wrote the new field name. It was never checked against patients that already existed in the
+database *before* that rename. Mongoose schema changes don't migrate existing documents:
+those two old patients still had `mitbihRecordId: "100"` in Mongo with no `recordId` field at
+all, so `patient.recordId` was `undefined` and the detector rejected the request.
+
+**Fix:** One-off migration — `updateMany` with an aggregation pipeline update
+(`$set: { recordId: "$mitbihRecordId" }` then `$unset: "mitbihRecordId"`) against the
+`patients` collection, applied directly via `node -e`, not a committed migration script (this
+is a single local/demo database, not a multi-environment deployment with its own migration
+tooling).
+
+**Lesson:** a schema field rename is two changes, not one — the schema/code, and the data
+already sitting in the database under the old name. Verifying against freshly-created records
+only tests the first half. Worth specifically re-checking pre-existing records after any
+field rename, not just the new-record path.
+
+---

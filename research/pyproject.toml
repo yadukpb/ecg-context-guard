@@ -1,0 +1,3 @@
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["Paper_1_Attack_Independent_Defence/tests", "Paper_2_Layered_MIOT_Framework/tests", "Common/tests"]

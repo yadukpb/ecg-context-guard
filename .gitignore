@@ -8,6 +8,9 @@ services/detector/venv/
 services/detector/__pycache__/
 services/detector/**/__pycache__/
 services/detector/.pytest_cache/
+research/Common/venv/
+research/**/__pycache__/
+research/.pytest_cache/
 docs/figures/*.png
 *.log
 .DS_Store

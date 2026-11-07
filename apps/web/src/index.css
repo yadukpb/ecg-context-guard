@@ -34,6 +34,10 @@
   --warning-wash: 253 241 220;
   --critical: 208 59 59;
   --critical-wash: 251 232 232;
+
+  /* Categorical slot 2 (orange) — dataviz reference palette. Only needed where a chart has
+     a genuine second series (e.g. FGSM vs. PGD); slot 1 is --accent. */
+  --series-2: 235 104 52;
 }
 
 :root.dark {
@@ -57,6 +61,8 @@
   --warning-wash: 46 34 8;
   --critical: 230 103 103;
   --critical-wash: 46 21 21;
+
+  --series-2: 217 89 38;
 }
 
 * {

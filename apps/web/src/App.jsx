@@ -6,6 +6,7 @@ import { ProjectOverview } from "./pages/ProjectOverview";
 import { PatientList } from "./pages/PatientList";
 import { PatientDashboard } from "./pages/PatientDashboard";
 import { Alerts } from "./pages/Alerts";
+import { ResearchFindings } from "./pages/ResearchFindings";
 
 function RequireAuth({ children }) {
   const { user, loading } = useAuth();
@@ -20,7 +21,7 @@ function RequireAuth({ children }) {
 
 function AppShell({ children }) {
   return (
-    <div className="flex min-h-screen bg-page">
+    <div className="flex min-h-screen flex-col bg-page md:flex-row">
       <Sidebar />
       <main className="min-w-0 flex-1">{children}</main>
     </div>
@@ -41,6 +42,7 @@ export default function App() {
                 <Route path="/patients" element={<PatientList />} />
                 <Route path="/patients/:id" element={<PatientDashboard />} />
                 <Route path="/alerts" element={<Alerts />} />
+                <Route path="/research" element={<ResearchFindings />} />
               </Routes>
             </AppShell>
           </RequireAuth>

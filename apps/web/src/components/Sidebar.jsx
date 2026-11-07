@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Bell, HeartPulse, LogOut, Menu, Moon, Sun, Users, X, BookOpen } from "lucide-react";
+import { Bell, FlaskConical, HeartPulse, LogOut, Menu, Moon, Sun, Users, X, BookOpen } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useTheme } from "../hooks/useTheme";
 
@@ -8,6 +8,7 @@ const NAV = [
   { to: "/", label: "Project overview", icon: BookOpen, exact: true },
   { to: "/patients", label: "Patients", icon: Users, exact: false },
   { to: "/alerts", label: "Alerts", icon: Bell, exact: false },
+  { to: "/research", label: "Research findings", icon: FlaskConical, exact: false },
 ];
 
 function Brand() {
