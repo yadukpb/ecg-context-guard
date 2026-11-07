@@ -59,15 +59,36 @@ datasets.
   first, smaller-scale pass did — consistent with dataset scale being the main remaining
   gap, not methodology (1215 samples here vs. the paper's ~15,000 segments across the same 4
   datasets).
-- **FGSM and PGD diverge sharply at higher ε, and that divergence is itself a real finding,
-  not noise.** FGSM degrades gracefully and even partially recovers (70.0% → 83.3% from
-  ε=0.1 to ε=1.0); PGD collapses to exactly 0.0% accuracy at every ε ≥ 0.1 and stays there.
-  This matches PGD's own nature as an iterative, stronger attack: once a perturbation budget
-  large enough to fully cross this model's decision boundary is available, PGD's multi-step
-  search reliably finds it, while FGSM's single gradient step doesn't as consistently. The
-  paper's own much larger, better-trained model holds up near 100% at the same ε values —
-  the collapse here is this reproduction's decision boundary failing under a strong attack,
-  not an error in running the attack itself.
+- **FGSM and PGD diverge sharply at higher ε, and the cause was directly verified, not
+  guessed — it's an input-scale mismatch, not a difference in attack strength.** FGSM
+  degrades then plateaus (70.0% → 83.3%, flat from ε=0.1 to ε=1.0); PGD collapses to exactly
+  0.0% and stays there. A smaller, same-code diagnostic (ECG-ID only, 30 people, same
+  attack functions, raw per-sample predictions printed rather than only the aggregate
+  accuracy) confirmed why: this reproduction's ECG segments average only ~0.37 in absolute
+  magnitude, so even ε=0.1 is already a huge fraction of the signal's own scale, and ε=1.0
+  is larger than the signal itself. **FGSM has no clipping at all** — at ε≥0.1 its single
+  unbounded step pushes every sample so far outside anything the model saw in training that
+  the model stops discriminating entirely and predicts one constant class for every input,
+  regardless of content. The resulting "accuracy" at every ε from 0.1 up is then just
+  whatever fraction of that batch's samples happen to carry that one constant label — a flat
+  line that looks like partial robustness but is actually a dead model, confirmed directly:
+  in the diagnostic, FGSM's predictions were identical (one single class) for all 30 samples
+  at every ε ≥ 0.1, and the resulting accuracy matched the batch's class balance exactly.
+  **PGD is clipped to an ε-ball around the original input**, so at low-to-medium ε it
+  performs a real, directed, per-sample gradient search within a bound still close to the
+  signal's own scale — genuinely flipping the prediction on nearly every sample (29/30 at
+  ε=0.1 in the diagnostic), which is a real robustness failure, not a collapse. At large
+  enough ε its own clip bound can eventually widen into the same "anywhere is fine, the
+  model gives up" regime as FGSM (observed in the diagnostic at ε=1.0, where PGD also
+  collapsed to a single constant class) — though in this particular full run PGD never
+  reaches that point within the sweep (it stays at a genuine 0.0% through ε=1.0), so whether
+  that collapse threshold sits above or below a given ε is model/sample-dependent, not a
+  fixed property of the attack. Either way, the paper's own much larger, better-trained
+  model — evaluated, presumably, against input already normalized to a scale the paper's
+  own epsilon convention assumes — holds up near 100% at the same nominal ε values; the
+  divergence here is this reproduction's smaller model failing under a real attack (PGD, low
+  ε) plus an input-scale mismatch that causes a separate, different kind of failure
+  (constant-output collapse, both attacks at high ε), not an error in running either attack.
 - **teleECG is clearly the hardest dataset to generalize to** (55.0% ACC / 71.0% F1 when
   held out, versus 87.9–98.1% for the other three). This tracks with teleECG being
   qualitatively different data: home telehealth dry-electrode recordings with real
