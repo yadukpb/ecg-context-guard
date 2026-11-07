@@ -236,8 +236,20 @@ Once all three commands above print a version number instead of an error, you're
 
 ### 7c. Run the app (dashboard + live ECG detection demo)
 
-Two commands, no Docker, no database to install or configure — identical on Windows,
-macOS, and Linux. Run from inside the project folder:
+No Docker, no database to install or configure. There are two ways to run it, both
+identical on Windows, macOS, and Linux — pick whichever is easier to hand to someone else:
+
+**Option A — one launcher script, every time:**
+
+- Windows: double-click **`run.bat`** (or run it from PowerShell: `.\run.bat`).
+- macOS/Linux: run **`./run.sh`** from a terminal inside the project folder.
+
+That single script installs everything on its very first run (same as `npm run setup`
+below) and starts the app every time after — so after the one-time prerequisite installs
+in §7b, this really is one action, repeated every time you want to run it.
+
+**Option B — the two commands it runs under the hood**, if you'd rather see/control each
+step:
 
 ```bash
 # One-time: installs Node dependencies, creates the Python virtual environment, installs
@@ -249,7 +261,7 @@ npm run setup
 npm start
 ```
 
-The first time `npm start` runs, the API automatically downloads and starts its own
+The first time either option runs, the API automatically downloads and starts its own
 self-contained MongoDB instance in the background (no Docker, no separate MongoDB install —
 just a real MongoDB binary, downloaded once and cached) and creates the demo account and
 demo patients. That data persists across restarts — you only see it get created once.
